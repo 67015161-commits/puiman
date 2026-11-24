@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1F3D2B">
+<title>ปุ๋ยแม่น</title>
+<style>
+  :root {
+    --soil: #1F3D2B; --soil-deep: #16301F; --leaf: #4C8C4A; --leaf-bright: #6FB25C;
+    --wheat: #E8D9A0; --cream: #F7F3E9; --amber: #D98E3F; --danger: #E53E3E;
+    --card: rgba(255,255,255,0.07); --line: rgba(255,255,255,0.12); --muted: rgba(255,255,255,0.6);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--soil-deep); color: #fff;
+    font-family: -apple-system, "Sarabun", "Noto Sans Thai", system-ui, sans-serif; }
+  body { padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); min-height: 100vh; }
+  .wrap { max-width: 520px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+  .label { font-size: 12px; color: var(--muted); }
+  .big { font-size: 56px; font-weight: 700; line-height: 1.05; color: var(--leaf-bright); }
+  .mid { font-size: 30px; font-weight: 700; line-height: 1.1; }
+  .unit { font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+  button { font: inherit; border: 0; border-radius: 14px; padding: 15px 18px; font-weight: 700; font-size: 16px;
+    color: #fff; background: var(--leaf); width: 100%; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--wheat); font-size: 14px; padding: 11px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .chip { font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .chip.on { color: #fff; background: var(--leaf); border-color: var(--leaf); }
+  .chip.warn { color: #fff; background: var(--danger); border-color: var(--danger); }
+  #status { font-size: 13px; color: var(--muted); margin: 8px 2px 0; min-height: 18px; }
+  #status.err { color: #ff9a9a; }
+  .banner { display: none; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: 14px; font-weight: 700; }
+  .banner.show { display: block; }
+  .banner.danger { background: rgba(229,62,62,.2); border: 1px solid var(--danger); color: #ffb4b4; }
+  .banner.info { background: rgba(217,142,63,.18); border: 1px solid var(--amber); color: var(--wheat); }
+  details { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  pre { white-space: pre-wrap; word-break: break-all; font-size: 11px; margin: 6px 0 0; }
+  .gap { height: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ปุ๋ยแม่น</h1>
+  <div class="sub">เวอร์ชันเว็บสำหรับ iPhone · เปิดด้วยแอป Bluefy</div>
+
+  <div id="unsupported" class="banner danger">
+    เบราว์เซอร์นี้ไม่รองรับบลูทูธบนเว็บ ให้เปิดหน้านี้ด้วยแอป <b>Bluefy</b> (ฟรีใน App Store) ไม่ใช่ Safari
+  </div>
+  <div id="bnClog" class="banner danger">ปุ๋ยติดขัด ตรวจกลไกหยอดทันที</div>
+  <div id="bnNoGps" class="banner info">GPS ยังไม่ล็อก ความเร็วเป็น 0 มอเตอร์จะไม่หมุน</div>
+
+  <div class="card">
+    <button id="btnConnect">เชื่อมต่อ ESP32</button>
+    <div class="gap"></div>
+    <button id="btnAll" class="ghost" style="display:none">ไม่เจออุปกรณ์? แสดงอุปกรณ์บลูทูธทั้งหมด</button>
+    <div id="status">ยังไม่เชื่อมต่อ</div>
+  </div>
+
+  <div class="card">
+    <div class="label">ความเร็วรถ</div>
+    <div><span id="vV" class="big">0.0</span><span class="unit">กม./ชม.</span></div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <div class="label">รอบมอเตอร์</div>
+      <div><span id="vRpm" class="mid">0</span><span class="unit">rpm</span></div>
+    </div>
+    <div class="card">
+      <div class="label">กระแส</div>
+      <div><span id="vAmp" class="mid">0.0</span><span class="unit">A</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">อัตราปุ๋ยที่ออก</div>
+    <div><span id="vQt" class="mid">0.0</span><span class="unit">กรัม/วินาที</span></div>
+  </div>
+
+  <div class="card">
+    <div class="label" style="margin-bottom:8px">สถานะ</div>
+    <div class="chips">
+      <span id="cConn" class="chip">บลูทูธ</span>
+      <span id="cGps" class="chip">GPS</span>
+      <span id="cCan" class="chip">มอเตอร์ (CAN)</span>
+      <span id="cRun" class="chip">กำลังหยอด</span>
+      <span id="cClog" class="chip">ปุ๋ยติดขัด</span>
+    </div>
+    <details>
+      <summary>ข้อมูลดิบ (ไว้ตรวจปัญหา)</summary>
+      <pre id="raw">-</pre>
+    </details>
+  </div>
+</div>
+
+<script>
+// ===== ค่าต้องตรงกับ ESP32 (esp32_puiman_farm1.ino) =====
+const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const WRITE_UUID   = "beb5483e-36e1-4688-b7f5-ea07361b26a8"; // เว็บ -> ESP32 (ขั้นถัดไป)
+const NOTIFY_UUID  = "cba1d466-344c-4be3-ab3f-189f80dd7518"; // ESP32 -> เว็บ
+const DEVICE_PREFIX = "Puiman";
+
+const $ = (id) => document.getElementById(id);
+const state = { device: null, server: null, notifyChar: null, writeChar: null, buf: "", lastRx: 0 };
+
+function setStatus(t, err = false) { const s = $("status"); s.textContent = t; s.className = err ? "err" : ""; }
+function chip(id, cls) { $(id).className = "chip" + (cls ? " " + cls : ""); }
+
+function render(d) {
+  $("vV").textContent   = (d.v ?? 0).toFixed(1);
+  $("vRpm").textContent = Math.round(d.rpm ?? 0);
+  $("vAmp").textContent = (d.amp ?? 0).toFixed(1);
+  $("vQt").textContent  = (d.qt ?? 0).toFixed(1);
+  chip("cGps",  d.gps  === 1 ? "on" : "warn");
+  chip("cCan",  d.can  === 1 ? "on" : "warn");
+  chip("cRun",  d.running === 1 ? "on" : "");
+  chip("cClog", d.clog === 1 ? "warn" : "");
+  $("bnClog").classList.toggle("show", d.clog === 1);
+  $("bnNoGps").classList.toggle("show", d.gps !== 1);
+}
+
+function onNotify(ev) {
+  const dv = ev.target.value;
+  state.buf += new TextDecoder().decode(dv.buffer);
+  state.lastRx = Date.now();
+  // ข้อความ JSON 1 ก้อนจบด้วย "}" (กันกรณีถูกตัดแบ่งเป็นหลายส่วน)
+  let end;
+  while ((end = state.buf.indexOf("}")) !== -1) {
+    const piece = state.buf.slice(0, end + 1);
+    state.buf = state.buf.slice(end + 1);
+    try {
+      const d = JSON.parse(piece);
+      $("raw").textContent = piece;
+      render(d);
+    } catch (e) {
+      $("raw").textContent = "อ่านข้อมูลไม่ได้: " + piece;
+    }
+  }
+  if (state.buf.length > 400) state.buf = "";
+}
+
+function onDisconnected() {
+  chip("cConn", "warn");
+  setStatus("หลุดการเชื่อมต่อ กดเชื่อมต่อใหม่ได้เลย", true);
+  $("btnConnect").textContent = "เชื่อมต่อ ESP32";
+  $("btnConnect").disabled = false;
+  render({ v: 0, rpm: 0, amp: 0, qt: 0, gps: 0, can: 0, running: 0, clog: 0 });
+}
+
+async function connect(acceptAll) {
+  $("btnConnect").disabled = true;
+  try {
+    setStatus("เลือกอุปกรณ์ PuimanESP32 จากรายการ...");
+    const opts = acceptAll
+      ? { acceptAllDevices: true, optionalServices: [SERVICE_UUID] }
+      : { filters: [{ namePrefix: DEVICE_PREFIX }], optionalServices: [SERVICE_UUID] };
+    const device = await navigator.bluetooth.requestDevice(opts);
+    state.device = device;
+    device.addEventListener("gattserverdisconnected", onDisconnected);
+
+    setStatus("กำลังเชื่อมต่อ...");
+    const server = await device.gatt.connect();
+    state.server = server;
+    const svc = await server.getPrimaryService(SERVICE_UUID);
+    state.writeChar  = await svc.getCharacteristic(WRITE_UUID);   // ใช้ในขั้นถัดไป
+    state.notifyChar = await svc.getCharacteristic(NOTIFY_UUID);
+    state.notifyChar.addEventListener("characteristicvaluechanged", onNotify);
+    await state.notifyChar.startNotifications();
+
+    chip("cConn", "on");
+    setStatus("เชื่อมต่อแล้ว: " + (device.name || "ESP32") + " · รอรับข้อมูล...");
+    $("btnConnect").textContent = "ตัดการเชื่อมต่อ";
+    $("btnConnect").disabled = false;
+    keepAwake();
+    setTimeout(() => {
+      if (state.device && state.device.gatt.connected && Date.now() - state.lastRx > 3000)
+        setStatus("เชื่อมต่อแล้ว แต่ยังไม่ได้รับข้อมูล ตรวจว่า ESP32 เปิดอยู่และโค้ดเป็นเวอร์ชันล่าสุด", true);
+    }, 4000);
+  } catch (e) {
+    $("btnConnect").disabled = false;
+    $("btnAll").style.display = "block";
+    if (e && e.name === "NotFoundError") setStatus("ยกเลิกหรือไม่พบอุปกรณ์ ลองอีกครั้ง", true);
+    else setStatus("เชื่อมต่อไม่สำเร็จ: " + (e && e.message ? e.message : e), true);
+  }
+}
+
+function disconnect() {
+  try { if (state.device && state.device.gatt.connected) state.device.gatt.disconnect(); } catch (_) {}
+}
+
+async function keepAwake() {          // กันหน้าจอดับ (บางเบราว์เซอร์ไม่รองรับ ไม่เป็นไร)
+  try { if ("wakeLock" in navigator) await navigator.wakeLock.request("screen"); } catch (_) {}
+}
+
+$("btnConnect").addEventListener("click", () => {
+  if (state.device && state.device.gatt.connected) disconnect(); else connect(false);
+});
+$("btnAll").addEventListener("click", () => connect(true));
+
+if (!("bluetooth" in navigator)) {
+  $("unsupported").classList.add("show");
+  $("btnConnect").disabled = true;
+  setStatus("เบราว์เซอร์นี้ใช้บลูทูธบนเว็บไม่ได้", true);
+}
+chip("cConn", "");
+</script>
+</body>
+</html>
