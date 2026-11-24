@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1F3D2B">
+<title>ปุ๋ยแม่น</title>
+<style>
+  :root {
+    --soil: #1F3D2B; --soil-deep: #16301F; --leaf: #4C8C4A; --leaf-bright: #6FB25C;
+    --wheat: #E8D9A0; --cream: #F7F3E9; --amber: #D98E3F; --danger: #E53E3E;
+    --card: rgba(255,255,255,0.07); --line: rgba(255,255,255,0.12); --muted: rgba(255,255,255,0.6);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--soil-deep); color: #fff;
+    font-family: -apple-system, "Sarabun", "Noto Sans Thai", system-ui, sans-serif; }
+  body { padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); min-height: 100vh; }
+  .wrap { max-width: 520px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+  .label { font-size: 12px; color: var(--muted); }
+  .big { font-size: 56px; font-weight: 700; line-height: 1.05; color: var(--leaf-bright); }
+  .mid { font-size: 30px; font-weight: 700; line-height: 1.1; }
+  .unit { font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+  button { font: inherit; border: 0; border-radius: 14px; padding: 15px 18px; font-weight: 700; font-size: 16px;
+    color: #fff; background: var(--leaf); width: 100%; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--wheat); font-size: 14px; padding: 11px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .chip { font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .chip.on { color: #fff; background: var(--leaf); border-color: var(--leaf); }
+  .chip.warn { color: #fff; background: var(--danger); border-color: var(--danger); }
+  #status { font-size: 13px; color: var(--muted); margin: 8px 2px 0; min-height: 18px; }
+  #status.err { color: #ff9a9a; }
+  .banner { display: none; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: 14px; font-weight: 700; }
+  .banner.show { display: block; }
+  .banner.danger { background: rgba(229,62,62,.2); border: 1px solid var(--danger); color: #ffb4b4; }
+  .banner.info { background: rgba(217,142,63,.18); border: 1px solid var(--amber); color: var(--wheat); }
+  details { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  pre { white-space: pre-wrap; word-break: break-all; font-size: 11px; margin: 6px 0 0; }
+  .gap { height: 8px; }
+  .opts { display: flex; gap: 8px; margin-top: 8px; }
+  .opt { flex: 1; padding: 10px 0; border-radius: 12px; border: 2px solid var(--line); background: transparent;
+    color: #fff; font-weight: 700; font-size: 20px; text-align: center; }
+  .opt small { display: block; font-size: 10px; font-weight: 400; color: var(--muted); }
+  .opt.sel { background: var(--amber); border-color: var(--amber); }
+  .opt.sel small { color: #fff; }
+  .field { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+  .field label { font-size: 13px; color: var(--muted); flex: 1; }
+  input[type=number] { width: 120px; font: inherit; font-size: 17px; font-weight: 700; color: #fff; text-align: right;
+    background: rgba(0,0,0,.25); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; }
+  .stepper { display: flex; align-items: center; gap: 10px; }
+  .stepper button { width: 44px; height: 44px; padding: 0; font-size: 22px; background: rgba(255,255,255,.12); }
+  .stepper .val { min-width: 74px; text-align: center; font-size: 22px; font-weight: 700; color: var(--wheat); }
+  .tbl { display: flex; gap: 8px; margin-top: 12px; }
+  .tbl > div { flex: 1; background: rgba(0,0,0,.22); border-radius: 12px; padding: 10px 6px; text-align: center; }
+  .tbl .t1 { font-size: 11px; color: var(--muted); }
+  .tbl .t2 { font-size: 20px; font-weight: 700; color: var(--wheat); }
+  .tbl .t2.cap { color: #ff9a9a; }
+  .tbl .t3 { font-size: 10px; color: var(--muted); }
+  .tbl .t4 { font-size: 16px; font-weight: 700; color: var(--leaf-bright); margin-top: 4px; }
+  .sw { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; margin-top: 10px;
+    border-radius: 12px; border: 1px solid var(--line); cursor: pointer; }
+  .sw.on { border-color: var(--amber); background: rgba(217,142,63,.14); }
+  .sw .tx b { display: block; font-size: 13px; }
+  .sw .tx span { font-size: 11px; color: var(--muted); }
+  .knob { width: 44px; height: 26px; border-radius: 13px; padding: 3px; background: #4a5a50; flex: none; }
+  .knob i { display: block; width: 20px; height: 20px; border-radius: 10px; background: #fff; }
+  .sw.on .knob { background: var(--amber); }
+  .sw.on .knob i { margin-left: 18px; }
+  button.run { background: var(--leaf); }
+  button.run.go { background: var(--danger); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .kv { background: rgba(0,0,0,.22); border-radius: 12px; padding: 12px; }
+  .kv .k { font-size: 11px; color: var(--muted); }
+  .kv .v { font-size: 24px; font-weight: 700; margin-top: 2px; }
+  .kv .v small { font-size: 12px; font-weight: 400; color: var(--muted); }
+  .bar { height: 10px; border-radius: 5px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 8px; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--leaf-bright); transition: width .4s; }
+  .bar i.low { background: var(--amber); }
+  .bar i.empty { background: var(--danger); }
+  .btns2 { display: flex; gap: 10px; margin-top: 14px; }
+  .btns2 button { font-size: 14px; padding: 12px; }
+  button.amber { background: transparent; border: 1.5px solid var(--amber); color: var(--amber); }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ปุ๋ยแม่น</h1>
+  <div class="sub">เวอร์ชันเว็บสำหรับ iPhone · เปิดด้วยแอป Bluefy</div>
+
+  <div id="unsupported" class="banner danger">
+    เบราว์เซอร์นี้ไม่รองรับบลูทูธบนเว็บ ให้เปิดหน้านี้ด้วยแอป <b>Bluefy</b> (ฟรีใน App Store) ไม่ใช่ Safari
+  </div>
+  <div id="bnClog" class="banner danger">ปุ๋ยติดขัด ตรวจกลไกหยอดทันที</div>
+  <div id="bnNoGps" class="banner info">GPS ยังไม่ล็อก ความเร็วเป็น 0 มอเตอร์จะไม่หมุน</div>
+
+  <div class="card">
+    <button id="btnConnect">เชื่อมต่อ ESP32</button>
+    <div class="gap"></div>
+    <button id="btnAll" class="ghost" style="display:none">ไม่เจออุปกรณ์? แสดงอุปกรณ์บลูทูธทั้งหมด</button>
+    <div id="status">ยังไม่เชื่อมต่อ</div>
+    <div id="swViewer" class="sw">
+      <div class="tx"><b id="swViewerT">ดูอย่างเดียว (ปิดอยู่)</b>
+        <span>เปิดในเครื่องที่ 2 เพื่อดูค่าสด ไม่ส่งคำสั่งไปทับเครื่องหลัก</span></div>
+      <div class="knob"><i></i></div>
+    </div>
+  </div>
+
+  <div id="bnViewer" class="banner info">โหมดดูอย่างเดียว: แสดงค่าสด สั่งเริ่ม/หยุดได้ที่เครื่องหลักเท่านั้น</div>
+
+  <div id="bnNotice" class="banner"></div>
+  <div id="bnLow" class="banner info"></div>
+
+  <div class="card">
+    <div class="label">แผนงาน</div>
+    <div class="field"><label for="inArea">พื้นที่ที่จะหยอด (ไร่)</label>
+      <input id="inArea" type="number" inputmode="decimal" step="0.1" min="0.1"></div>
+    <div class="field"><label for="inBag">ขนาดกระสอบปุ๋ย (กก.)</label>
+      <input id="inBag" type="number" inputmode="decimal" step="1" min="1"></div>
+    <div class="field"><label for="inHop">ถังปุ๋ยจุ (กก.)</label>
+      <input id="inHop" type="number" inputmode="decimal" step="1" min="1"></div>
+    <div class="field"><label for="inLow">เตือนเมื่อปุ๋ยในถังเหลือ (%)</label>
+      <input id="inLow" type="number" inputmode="decimal" step="5" min="1" max="90"></div>
+    <div class="hint" id="planHint"></div>
+  </div>
+
+  <div id="ctl">
+    <div class="card">
+      <button id="btnRun" class="run">เริ่มหยอดปุ๋ย</button>
+      <div id="swTest" class="sw">
+        <div class="tx"><b id="swTestT">โหมดทดสอบ (ปิดอยู่)</b>
+          <span>ใช้ความเร็วที่กรอกแทน GPS เพื่อทดสอบ (ยกล้อรถก่อนทดสอบ)</span></div>
+        <div class="knob"><i></i></div>
+      </div>
+      <div id="testRow" class="field" style="display:none">
+        <label for="inTestV">ความเร็วทดสอบ (กม./ชม.)</label>
+        <input id="inTestV" type="number" inputmode="decimal" step="0.1" min="0" max="15">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">อัตราปุ๋ย (กก./ไร่)</div>
+      <div class="opts" id="rateOpts"></div>
+      <div class="field"><label for="inRate">หรือพิมพ์เอง</label>
+        <input id="inRate" type="number" inputmode="decimal" step="1" min="1"></div>
+
+      <div class="label" style="margin-top:18px">ความกว้างหยอดปุ๋ย (ม.)</div>
+      <div class="field" style="justify-content:center;gap:18px">
+        <div class="stepper">
+          <button id="wMinus" aria-label="ลด">−</button>
+          <div class="val" id="wVal">1.8</div>
+          <button id="wPlus" aria-label="เพิ่ม">+</button>
+        </div>
+      </div>
+      <div class="hint" style="text-align:center">ช่วง 1.5 – 2.0 ม.</div>
+
+      <div class="field"><label for="inQ">ปุ๋ยต่อ 1 รอบเพลา (กก./รอบ)</label>
+        <input id="inQ" type="number" inputmode="decimal" step="0.0001" min="0.001" max="0.5"></div>
+
+      <div class="label" style="margin-top:18px">รอบมอเตอร์ที่ต้องใช้ · ปุ๋ยที่จะได้</div>
+      <div class="tbl" id="tbl"></div>
+      <div class="hint" id="kHint"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">ความเร็วรถ</div>
+    <div><span id="vV" class="big">0.0</span><span class="unit">กม./ชม.</span></div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <div class="label">รอบมอเตอร์</div>
+      <div><span id="vRpm" class="mid">0</span><span class="unit">rpm</span></div>
+    </div>
+    <div class="card">
+      <div class="label">กระแส</div>
+      <div><span id="vAmp" class="mid">0.0</span><span class="unit">A</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">อัตราปุ๋ยที่ออก</div>
+    <div><span id="vQt" class="mid">0.0</span><span class="unit">กรัม/วินาที</span></div>
+  </div>
+
+  <div class="card">
+    <div class="label">ผลงานการหยอด</div>
+    <div class="grid2">
+      <div class="kv"><div class="k">ระยะที่รถไถขี่</div><div class="v" id="rDist">0 <small>ม.</small></div></div>
+      <div class="kv"><div class="k">ปุ๋ยที่ลงไป</div><div class="v" id="rFert">0.00 <small>กก.</small></div></div>
+      <div class="kv"><div class="k">เวลาที่หยอด</div><div class="v" id="rTime">0:00</div></div>
+      <div class="kv"><div class="k">พื้นที่ที่ทำแล้ว</div><div class="v" id="rArea">0.00 <small>ไร่</small></div></div>
+    </div>
+    <div class="label" style="margin-top:16px" id="rHopT">ปุ๋ยในถัง</div>
+    <div class="bar"><i id="rHopBar"></i></div>
+    <div class="hint" id="rBags"></div>
+    <div class="btns2">
+      <button id="btnRefill" class="amber">เติมปุ๋ยแล้ว</button>
+      <button id="btnReset" class="ghost">รีเซ็ตตัวนับ</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label" style="margin-bottom:8px">สถานะ</div>
+    <div class="chips">
+      <span id="cConn" class="chip">บลูทูธ</span>
+      <span id="cGps" class="chip">GPS</span>
+      <span id="cCan" class="chip">มอเตอร์ (CAN)</span>
+      <span id="cRun" class="chip">กำลังหยอด</span>
+      <span id="cClog" class="chip">ปุ๋ยติดขัด</span>
+    </div>
+    <details>
+      <summary>ข้อมูลดิบ (ไว้ตรวจปัญหา)</summary>
+      <pre id="raw">-</pre>
+    </details>
+  </div>
+</div>
+
+<script>
+// ===== ค่าต้องตรงกับ ESP32 (esp32_puiman_farm1.ino) =====
+const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const WRITE_UUID   = "beb5483e-36e1-4688-b7f5-ea07361b26a8"; // เว็บ -> ESP32 (ขั้นถัดไป)
+const NOTIFY_UUID  = "cba1d466-344c-4be3-ab3f-189f80dd7518"; // ESP32 -> เว็บ
+const DEVICE_PREFIX = "Puiman";
+
+const $ = (id) => document.getElementById(id);
+const state = { device: null, server: null, notifyChar: null, writeChar: null, buf: "", lastRx: 0 };
+
+function setStatus(t, err = false) { const s = $("status"); s.textContent = t; s.className = err ? "err" : ""; }
+function chip(id, cls) { $(id).className = "chip" + (cls ? " " + cls : ""); }
+
+function render(d) {
+  $("vV").textContent   = (d.v ?? 0).toFixed(1);
+  $("vRpm").textContent = Math.round(d.rpm ?? 0);
+  $("vAmp").textContent = (d.amp ?? 0).toFixed(1);
+  $("vQt").textContent  = (d.qt ?? 0).toFixed(1);
+  chip("cGps",  d.gps  === 1 ? "on" : "warn");
+  chip("cCan",  d.can  === 1 ? "on" : "warn");
+  chip("cRun",  d.running === 1 ? "on" : "");
+  chip("cClog", d.clog === 1 ? "warn" : "");
+  $("bnClog").classList.toggle("show", d.clog === 1);
+  $("bnNoGps").classList.toggle("show", d.gps !== 1);
+}
+
+function onNotify(ev) {
+  const dv = ev.target.value;
+  state.buf += new TextDecoder().decode(dv.buffer);
+  state.lastRx = Date.now();
+  // ข้อความ JSON 1 ก้อนจบด้วย "}" (กันกรณีถูกตัดแบ่งเป็นหลายส่วน)
+  let end;
+  while ((end = state.buf.indexOf("}")) !== -1) {
+    const piece = state.buf.slice(0, end + 1);
+    state.buf = state.buf.slice(end + 1);
+    try {
+      const d = JSON.parse(piece);
+      $("raw").textContent = piece;
+      render(d);
+    } catch (e) {
+      $("raw").textContent = "อ่านข้อมูลไม่ได้: " + piece;
+    }
+  }
+  if (state.buf.length > 400) state.buf = "";
+}
+
+function onDisconnected() {
+  chip("cConn", "warn");
+  setStatus("หลุดการเชื่อมต่อ กดเชื่อมต่อใหม่ได้เลย", true);
+  $("btnConnect").textContent = "เชื่อมต่อ ESP32";
+  $("btnConnect").disabled = false;
+  render({ v: 0, rpm: 0, amp: 0, qt: 0, gps: 0, can: 0, running: 0, clog: 0 });
+}
+
+async function connect(acceptAll) {
+  $("btnConnect").disabled = true;
+  try {
+    setStatus("เลือกอุปกรณ์ PuimanESP32 จากรายการ...");
+    const opts = acceptAll
+      ? { acceptAllDevices: true, optionalServices: [SERVICE_UUID] }
+      : { filters: [{ namePrefix: DEVICE_PREFIX }], optionalServices: [SERVICE_UUID] };
+    const device = await navigator.bluetooth.requestDevice(opts);
+    state.device = device;
+    device.addEventListener("gattserverdisconnected", onDisconnected);
+
+    setStatus("กำลังเชื่อมต่อ...");
+    const server = await device.gatt.connect();
+    state.server = server;
+    const svc = await server.getPrimaryService(SERVICE_UUID);
+    state.writeChar  = await svc.getCharacteristic(WRITE_UUID);   // ใช้ในขั้นถัดไป
+    state.notifyChar = await svc.getCharacteristic(NOTIFY_UUID);
+    state.notifyChar.addEventListener("characteristicvaluechanged", onNotify);
+    await state.notifyChar.startNotifications();
+
+    chip("cConn", "on");
+    setStatus("เชื่อมต่อแล้ว: " + (device.name || "ESP32") + " · รอรับข้อมูล...");
+    $("btnConnect").textContent = "ตัดการเชื่อมต่อ";
+    $("btnConnect").disabled = false;
+    keepAwake();
+    setTimeout(() => {
+      if (state.device && state.device.gatt.connected && Date.now() - state.lastRx > 3000)
+        setStatus("เชื่อมต่อแล้ว แต่ยังไม่ได้รับข้อมูล ตรวจว่า ESP32 เปิดอยู่และโค้ดเป็นเวอร์ชันล่าสุด", true);
+    }, 4000);
+  } catch (e) {
+    $("btnConnect").disabled = false;
+    $("btnAll").style.display = "block";
+    if (e && e.name === "NotFoundError") setStatus("ยกเลิกหรือไม่พบอุปกรณ์ ลองอีกครั้ง", true);
+    else setStatus("เชื่อมต่อไม่สำเร็จ: " + (e && e.message ? e.message : e), true);
+  }
+}
+
+function disconnect() {
+  try { if (state.device && state.device.gatt.connected) state.device.gatt.disconnect(); } catch (_) {}
+}
+
+async function keepAwake() {          // กันหน้าจอดับ (บางเบราว์เซอร์ไม่รองรับ ไม่เป็นไร)
+  try { if ("wakeLock" in navigator) await navigator.wakeLock.request("screen"); } catch (_) {}
+}
+
+$("btnConnect").addEventListener("click", () => {
+  if (state.device && state.device.gatt.connected) disconnect(); else connect(false);
+});
+$("btnAll").addEventListener("click", () => connect(true));
+
+if (!("bluetooth" in navigator)) {
+  $("unsupported").classList.add("show");
+  $("btnConnect").disabled = true;
+  setStatus("เบราว์เซอร์นี้ใช้บลูทูธบนเว็บไม่ได้", true);
+}
+chip("cConn", "");
+
+// =====================================================================
+// ขั้น 2: ควบคุมมอเตอร์ + ตั้งค่า
+// =====================================================================
+const RATE_OPTIONS = [20, 35, 50, 65];   // กก./ไร่
+const SPEED_OPTIONS = [3, 5, 7];         // กม./ชม. (ตารางรอบมอเตอร์)
+const MAX_RPM = 400;
+const CFG_KEY = "puiman_web_cfg_v1";
+
+const cfg = { rate: 35, width: 1.8, qrev: 0.0469, test: false, testV: 3, viewer: false };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY) || "{}")); } catch (_) {}
+cfg.test = false;                        // เริ่มต้นทุกครั้งเป็นโหมดปกติ (กันลืมเปิดทดสอบ)
+let running = false;
+let startedAt = 0;
+
+function saveCfg() { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (_) {} }
+const isConn = () => !!(state.device && state.device.gatt && state.device.gatt.connected);
+
+function renderCfg() {
+  // ปุ่มอัตราปุ๋ยด่วน
+  const box = $("rateOpts");
+  box.innerHTML = "";
+  RATE_OPTIONS.forEach((r) => {
+    const b = document.createElement("button");
+    b.className = "opt" + (cfg.rate === r ? " sel" : "");
+    b.innerHTML = r + "<small>กก./ไร่</small>";
+    b.onclick = () => { cfg.rate = r; saveCfg(); renderCfg(); pushNow(); };
+    box.appendChild(b);
+  });
+  if (document.activeElement !== $("inRate")) $("inRate").value = cfg.rate;
+  $("wVal").textContent = cfg.width.toFixed(1);
+  if (document.activeElement !== $("inQ")) $("inQ").value = cfg.qrev;
+  if (document.activeElement !== $("inTestV")) $("inTestV").value = cfg.testV;
+
+  // ตารางรอบมอเตอร์ที่ 3/5/7 กม./ชม. + ปุ๋ยที่จะได้
+  const K = (cfg.rate * cfg.width) / (96 * cfg.qrev);     // rpm ต่อ 1 กม./ชม.
+  $("tbl").innerHTML = SPEED_OPTIONS.map((v) => {
+    const want = K * v, capped = want > MAX_RPM, eff = Math.min(want, MAX_RPM);
+    const kgMin = eff * cfg.qrev;
+    return `<div><div class="t1">ที่ ${v} กม./ชม.</div>
+      <div class="t2${capped ? " cap" : ""}">${want.toFixed(0)}</div><div class="t3">rpm</div>
+      <div class="t4">${kgMin.toFixed(2)}</div><div class="t3">กก./นาที (${(kgMin * 1000 / 60).toFixed(0)} ก./วิ)</div></div>`;
+  }).join("");
+  $("kHint").textContent = `K = ${K.toFixed(2)} rpm ต่อ 1 กม./ชม. · เพดานมอเตอร์ ${MAX_RPM} rpm (ถ้าเกินจะเป็นสีแดง)`;
+
+  // สวิตช์
+  $("swTest").classList.toggle("on", cfg.test);
+  $("swTestT").textContent = cfg.test ? "โหมดทดสอบ (เปิดอยู่)" : "โหมดทดสอบ (ปิดอยู่)";
+  $("testRow").style.display = cfg.test ? "flex" : "none";
+  $("swViewer").classList.toggle("on", cfg.viewer);
+  $("swViewerT").textContent = cfg.viewer ? "ดูอย่างเดียว (เปิดอยู่)" : "ดูอย่างเดียว (ปิดอยู่)";
+  $("ctl").style.display = cfg.viewer ? "none" : "block";
+  $("bnViewer").classList.toggle("show", cfg.viewer);
+
+  // ปุ่มเริ่ม/หยุด
+  const rb = $("btnRun");
+  rb.textContent = running ? "หยุดมอเตอร์" : (cfg.test ? "เริ่ม (โหมดทดสอบ)" : "เริ่มหยอดปุ๋ย");
+  rb.className = "run" + (running ? " go" : "");
+}
+
+function numIn(id, min, max, apply) {
+  $(id).addEventListener("change", () => {
+    let n = parseFloat($(id).value);
+    if (!isFinite(n)) { renderCfg(); return; }
+    n = Math.min(max, Math.max(min, n));
+    apply(n); saveCfg(); renderCfg(); pushNow();
+  });
+}
+numIn("inRate", 1, 500, (n) => { cfg.rate = Math.round(n * 10) / 10; });
+numIn("inQ", 0.001, 0.5, (n) => { cfg.qrev = Math.round(n * 10000) / 10000; });
+numIn("inTestV", 0, 15, (n) => { cfg.testV = Math.round(n * 10) / 10; });
+function stepW(d) {
+  const n = Math.round((cfg.width + d) * 10) / 10;
+  if (n >= 1.5 && n <= 2.0) { cfg.width = n; saveCfg(); renderCfg(); pushNow(); }
+}
+$("wMinus").onclick = () => stepW(-0.1);
+$("wPlus").onclick = () => stepW(0.1);
+
+$("swTest").onclick = () => {
+  if (running) { setStatus("หยุดมอเตอร์ก่อนสลับโหมดทดสอบ", true); return; }
+  cfg.test = !cfg.test; renderCfg(); pushNow();
+};
+$("swViewer").onclick = () => {
+  cfg.viewer = !cfg.viewer;
+  cfg.test = false;
+  running = false; saveCfg(); renderCfg();
+};
+
+$("btnRun").onclick = () => {
+  if (cfg.viewer) return;
+  if (!running && !isConn()) { setStatus("ยังไม่ได้เชื่อมต่อ ESP32", true); return; }
+  running = !running;
+  if (running) startedAt = Date.now();
+  renderCfg(); pushNow();
+};
+
+// ---- ส่งคำสั่งไป ESP32 (รูปแบบเดียวกับแอป: qa, w, running, qr, tv) ----
+let sending = false;
+async function pushNow() {
+  if (cfg.viewer || sending || !isConn() || !state.writeChar) return;
+  sending = true;
+  try {
+    const msg = { qa: Math.round(cfg.rate * 10) / 10, w: Math.round(cfg.width * 10) / 10,
+                  running: running ? 1 : 0, qr: Math.round(cfg.qrev * 10000) / 10000 };
+    if (cfg.test) msg.tv = Math.round(cfg.testV * 10) / 10;
+    const data = new TextEncoder().encode(JSON.stringify(msg));
+    if (state.writeChar.writeValueWithResponse) await state.writeChar.writeValueWithResponse(data);
+    else await state.writeChar.writeValue(data);
+  } catch (e) {
+    setStatus("ส่งคำสั่งไม่สำเร็จ: " + (e && e.message ? e.message : e), true);
+  } finally { sending = false; }
+}
+// ส่งซ้ำทุก 0.5 วินาที (ESP32 จะหยุดมอเตอร์เองถ้าเงียบเกิน 3 วินาที = ระบบความปลอดภัย)
+setInterval(pushNow, 500);
+
+// ---- ปรับ render/onNotify/onDisconnected เดิมให้เข้ากับการควบคุม ----
+const _render = render;
+render = function (d) {
+  _render(d);
+  if (cfg.viewer) {                       // เครื่องดูอย่างเดียว: ตามสถานะจริงของมอเตอร์
+    const r = d.running === 1;
+    if (r !== running) { running = r; renderCfg(); }
+  } else if (running && d.running === 0 && Date.now() - startedAt > 1500) {
+    running = false; renderCfg();         // ESP32 หยุดเอง (เช่น ปุ๋ยหมด/สัญญาณหาย)
+    setStatus("ESP32 หยุดมอเตอร์แล้ว", true);
+  }
+};
+const _onDisc = onDisconnected;
+onDisconnected = function () { running = false; _onDisc(); renderCfg(); };
+
+renderCfg();
+
+// =====================================================================
+// ขั้น 3: ตัวนับ ระยะทาง/ปุ๋ย/ถังปุ๋ย + เตือน + หยุดอัตโนมัติ
+// =====================================================================
+Object.assign(cfg, { area: 1, bag: 50, hopper: 50, low: 20 });
+try { const c = JSON.parse(localStorage.getItem(CFG_KEY) || "{}");
+      ["area", "bag", "hopper", "low"].forEach((k) => { if (isFinite(c[k])) cfg[k] = c[k]; }); } catch (_) {}
+const SIM_KEY = "puiman_web_sim_v1";
+const EMPTY = { elapsed: 0, covered: 0, dist: 0, qtSum: 0, refillBase: 0 };
+let sim = { ...EMPTY };
+try { Object.assign(sim, JSON.parse(localStorage.getItem(SIM_KEY) || "{}")); } catch (_) {}
+let live = { v: 0, rpm: 0 };
+let notice = null, noticeUntil = 0, lastBags = Math.floor((sim.qtSum || 0) / 1000 / cfg.bag);
+
+const pad = (n) => String(n).padStart(2, "0");
+function saveSim() { try { localStorage.setItem(SIM_KEY, JSON.stringify(sim)); } catch (_) {} }
+function setNotice(type, text, ms) { notice = { type, text }; noticeUntil = ms ? Date.now() + ms : 0; renderSim(); }
+
+function stopMotor() { running = false; renderCfg(); pushNow(); }
+
+function renderSim() {
+  const usedKg = sim.qtSum / 1000;
+  const needKg = cfg.area * cfg.rate;
+  const capKg = cfg.hopper > 0 ? cfg.hopper : cfg.bag;
+  const leftKg = Math.max(0, capKg - (sim.qtSum - sim.refillBase) / 1000);
+  const pct = capKg > 0 ? (leftKg / capKg) * 100 : 0;
+  const bagsTot = cfg.bag > 0 ? Math.ceil(needKg / cfg.bag) : 0;
+  const bagsUsed = cfg.bag > 0 ? Math.floor(usedKg / cfg.bag) : 0;
+
+  $("rDist").innerHTML = (sim.dist >= 1000 ? (sim.dist / 1000).toFixed(2) + " <small>กม.</small>" : sim.dist.toFixed(0) + " <small>ม.</small>");
+  $("rFert").innerHTML = usedKg.toFixed(2) + " <small>กก.</small>";
+  $("rTime").textContent = Math.floor(sim.elapsed / 60) + ":" + pad(sim.elapsed % 60);
+  $("rArea").innerHTML = sim.covered.toFixed(2) + " <small>/ " + cfg.area.toFixed(1) + " ไร่</small>";
+  $("rHopT").textContent = `ปุ๋ยในถัง เหลือ ${leftKg.toFixed(1)} / ${capKg.toFixed(0)} กก. (${pct.toFixed(0)}%)`;
+  const bar = $("rHopBar");
+  bar.style.width = Math.max(0, Math.min(100, pct)) + "%";
+  bar.className = pct <= 0 ? "empty" : pct <= cfg.low ? "low" : "";
+  $("rBags").textContent = `ใช้ไป ${bagsUsed}/${bagsTot} กระสอบ (${cfg.bag} กก./กระสอบ) · ปุ๋ยตามแผน ${usedKg.toFixed(1)} / ${needKg.toFixed(1)} กก.`;
+  $("planHint").textContent = `ปุ๋ยที่ต้องใช้ทั้งหมดประมาณ ${needKg.toFixed(1)} กก. (${bagsTot} กระสอบ)`;
+
+  const bn = $("bnNotice");
+  bn.className = "banner" + (notice ? " show " + notice.type : "");
+  bn.textContent = notice ? notice.text : "";
+  const low = $("bnLow");
+  const showLow = leftKg > 0 && pct <= cfg.low;
+  low.className = "banner info" + (showLow ? " show" : "");
+  low.textContent = showLow ? `ปุ๋ยในถังเหลือ ${pct.toFixed(0)}% เตรียมเติมปุ๋ย` : "";
+  return { usedKg, needKg, leftKg };
+}
+
+// ทุก 1 วินาที เฉพาะตอนกำลังหยอด
+setInterval(() => {
+  if (notice && noticeUntil && Date.now() > noticeUntil) { notice = null; noticeUntil = 0; }
+  if (running) {
+    const v0 = cfg.test ? cfg.testV : (live.v || 0);
+    const v = v0 < 0.4 ? 0 : v0;                                   // deadband ใกล้เคียง ESP32
+    const qtTheory = (v * cfg.width * cfg.rate) / 5.76;            // กรัม/วินาที ตามสูตร
+    const qtActual = (live.rpm || 0) > 0 ? (live.rpm / 60) * cfg.qrev * 1000 : qtTheory;
+    const qtUse = v > 0 ? qtActual : 0;
+    const speedMs = v / 3.6;
+    sim.elapsed += 1;
+    sim.covered = Math.min(cfg.area, sim.covered + (speedMs * cfg.width) / 1600);
+    sim.dist += speedMs;
+    sim.qtSum += qtUse;
+    saveSim();
+
+    const r = renderSim();
+    if (r.needKg > 0 && r.usedKg >= r.needKg) {
+      if (!cfg.viewer) stopMotor();
+      setNotice("info", "ปุ๋ยครบตามแผนแล้ว หยุดมอเตอร์อัตโนมัติ");
+    } else if (r.leftKg <= 0) {
+      if (!cfg.viewer) stopMotor();
+      setNotice("danger", "ปุ๋ยในถังหมด กรุณาเติมปุ๋ย แล้วกด \"เติมปุ๋ยแล้ว\"");
+    } else {
+      const bu = cfg.bag > 0 ? Math.floor(r.usedKg / cfg.bag) : 0;
+      if (bu > lastBags) {
+        setNotice("info", `ใช้ปุ๋ยหมด ${bu} กระสอบแล้ว`, 10000);
+      }
+      lastBags = bu;
+    }
+  } else renderSim();
+}, 1000);
+
+// ช่องกรอกแผนงาน
+function planIn(id, key, min, max, round) {
+  $(id).value = cfg[key];
+  $(id).addEventListener("change", () => {
+    let n = parseFloat($(id).value);
+    if (!isFinite(n)) { $(id).value = cfg[key]; return; }
+    n = Math.min(max, Math.max(min, n));
+    cfg[key] = Math.round(n * round) / round; $(id).value = cfg[key];
+    if (key === "area" || key === "bag") { if (notice && !noticeUntil) notice = null; }
+    saveCfg(); renderSim();
+  });
+}
+planIn("inArea", "area", 0.1, 1000, 10);
+planIn("inBag", "bag", 1, 200, 10);
+planIn("inHop", "hopper", 1, 500, 10);
+planIn("inLow", "low", 1, 90, 1);
+
+$("btnRefill").onclick = () => {
+  sim.refillBase = sim.qtSum; saveSim();
+  if (notice && !noticeUntil) notice = null;
+  renderSim();
+};
+$("btnReset").onclick = () => {
+  if (!confirm("รีเซ็ตตัวนับ (ระยะทาง ปุ๋ย เวลา) ใช่ไหม")) return;
+  if (running && !cfg.viewer) stopMotor();
+  sim = { ...EMPTY }; saveSim(); notice = null; noticeUntil = 0; lastBags = 0; renderSim();
+};
+// เริ่มหยอดใหม่ = ล้างข้อความแจ้งเตือนค้าง (ถ้ายังหมด/ครบ จะแจ้งใหม่เองทันที)
+$("btnRun").addEventListener("click", () => { if (running && notice && !noticeUntil) { notice = null; renderSim(); } });
+
+// เก็บค่าสดล่าสุดไว้ให้ตัวนับใช้
+const _render2 = render;
+render = function (d) { live = d; _render2(d); };
+
+renderSim();
+</script>
+</body>
+</html>
